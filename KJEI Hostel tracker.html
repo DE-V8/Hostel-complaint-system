@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hostel Complaint Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4a69bd;
+      --secondary-color: #6a89cc;
+      --light-bg: #f8f9fa;
+      --dark-text: #343a40;
+      --light-text: #ffffff;
+      --border-color: #dee2e6;
+      --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--light-bg); color: var(--dark-text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: var(--light-text); padding: 15px 0; width: 100%; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .header-content { display: flex; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    header h1 { font-weight: 600; font-size: 1.8em; margin: 0 0 0 20px; }
+    header img { max-height: 60px; }
+    .container { width: 90%; max-width: 500px; margin: 1rem 0; background: var(--light-text); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    h2 { color: var(--primary-color); margin-bottom: 1.5rem; text-align: center; font-weight: 500; }
+    p { margin-bottom: 1rem; }
+    .hidden { display: none; }
+    input, textarea, select, button { font-family: 'Poppins', sans-serif; width: 100%; padding: 12px 15px; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.2); }
+    textarea { resize: vertical; min-height: 100px; }
+    button { background: var(--primary-color); color: var(--light-text); border: none; cursor: pointer; font-weight: 500; font-size: 1rem; }
+    button:hover { background: var(--secondary-color); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    button.logout-btn { background-color: var(--danger-color); }
+    button.logout-btn:hover { background-color: #c82333; }
+    button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+    .status-tag { font-weight: 500; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; color: var(--dark-text); display: inline-block; }
+    .tag-Pending { background-color: var(--danger-color); }
+    .tag-In-Progress { background-color: var(--warning-color); color: var(--dark-text); }
+    .tag-Resolved { background-color: var(--success-color); }
+    .link { color: var(--primary-color); cursor: pointer; text-decoration: none; font-weight: 500; }
+    .link:hover { text-decoration: underline; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 30px; background-color: var(--dark-text); color: var(--light-text); box-shadow: 0 5px 15px rgba(0,0,0,0.2); visibility: hidden; opacity: 0; transition: opacity 0.3s, visibility 0.3s, bottom 0.3s; z-index: 1000; }
+    #toast.show { visibility: visible; opacity: 1; bottom: 30px; }
+    #toast.success { background-color: var(--success-color); }
+    #toast.error { background-color: var(--danger-color); }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; }
+    th { background: var(--light-bg); color: var(--dark-text); font-weight: 600; }
+    tbody tr:hover { background-color: #f1f3f5; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <img src="KJEI logo.jpg" alt="College Logo"> 
+    <h1>KJEI HOSTEL COMPLAINT TRACKER</h1>
+  </div>
+</header>
+
+<div class="container" id="loginPanel">
+  <h2>Login</h2>
+  <form onsubmit="login(this.querySelector('button')); event.preventDefault();">
+    <input type="text" id="loginEmail" placeholder="Enter Email or 'admin'">
+    <input type="password" id="loginPassword" placeholder="Enter Password">
+    <button type="submit">Login</button>
+  </form>
+  <p style="text-align: center; margin-top: 1rem;"><span class="link" onclick="showPanel('forgotPasswordPanel')">Forgot Password?</span></p>
+  <p style="text-align: center;">New user? <span class="link" onclick="showPanel('registerPanel')">Create an account</span></p>
+</div>
+
+<div class="container hidden" id="adminPanel" style="max-width: 1100px;">
+    <h2>Admin Dashboard</h2>
+    <p>Welcome, Admin. Here are all submitted complaints.</p>
+    <table id="complaintsTable">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Room</th>
+                <th>Type</th>
+                <th>Complaint</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody id="allComplaints"></tbody>
+    </table>
+    <button onclick="logout()" class="logout-btn" style="margin-top:1rem;">Logout</button>
+</div>
+
+<div class="container hidden" id="studentPanel" style="max-width: 900px;">
+  <h2>Student Dashboard</h2>
+  <p>Welcome, <b id="studentName"></b>!</p>
+  <h3>File a New Complaint</h3>
+  <select id="complaintType">
+    <option value="">-- Select Complaint Type --</option>
+    <option value="Plumbing Issue">Plumbing Issue</option>
+    <option value="Ragging Issue">Ragging Issue</option>
+    <option value="Cleaning Problem">Cleaning Problem</option>
+    <option value="Electricity Issue">Electricity Issue</option>
+    <option value="Other">Other</option>
+  </select>
+  <input type="text" id="roomNumber" placeholder="Enter Your Room Number (e.g., A-101)">
+  <textarea id="complaintText" placeholder="Please describe your issue in detail..."></textarea>
+  <button onclick="submitComplaint(this)">Submit Complaint</button>
+  <h3 style="margin-top: 2rem;">Your Complaint History</h3>
+  <div id="studentComplaints"></div>
+  <button onclick="logout()" class="logout-btn" style="margin-top:1rem;">Logout</button>
+</div>
+
+<div class="container hidden" id="forgotPasswordPanel">
+    <h2>Forgot Password</h2>
+    <p>Enter your email address and we'll send you a code to reset your password.</p>
+    <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+    <button onclick="forgotPassword(this)">Send Reset Code</button>
+    <p style="text-align: center; margin-top: 1rem;"><span class="link" onclick="showPanel('loginPanel')">Back to Login</span></p>
+</div>
+<div class="container hidden" id="resetOtpPanel">
+    <h2>Enter Reset Code</h2>
+    <p>A 6-digit code has been sent to <b id="resetOtpEmailDisplay"></b>. Please enter it below.</p>
+    <input type="number" id="resetOtpInput" placeholder="Enter 6-digit OTP">
+    <button onclick="verifyResetOtp(this)">Verify Code</button>
+</div>
+<div class="container hidden" id="newPasswordPanel">
+    <h2>Create New Password</h2>
+    <p>Enter a new, secure password for your account.</p>
+    <input type="password" id="newPasswordInput" placeholder="Enter New Password">
+    <input type="password" id="confirmNewPasswordInput" placeholder="Confirm New Password">
+    <button onclick="resetPassword(this)">Reset Password</button>
+</div>
+<div class="container hidden" id="registerPanel">
+  <h2>Create Student Account</h2>
+  <input type="text" id="regFirstName" placeholder="First Name">
+  <input type="text" id="regLastName" placeholder="Last Name">
+  <input type="email" id="regEmail" placeholder="Email Address">
+  <button onclick="register(this)">Register</button>
+  <p style="text-align: center; margin-top: 1rem;">Already have an account? <span class="link" onclick="showPanel('loginPanel')">Login here</span></p>
+</div>
+<div class="container hidden" id="otpPanel">
+    <h2>2-Step Verification</h2>
+    <p>An OTP has been sent to <b id="otpEmailDisplay"></b>. Please enter it below.</p>
+    <input type="number" id="otpInput" placeholder="Enter 6-digit OTP">
+    <button onclick="verifyOtp(this)">Verify OTP</button>
+</div>
+<div class="container hidden" id="setPasswordPanel">
+    <h2>Set Your Password</h2>
+    <p>Create a secure password for your account.</p>
+    <input type="password" id="setPasswordInput" placeholder="Enter New Password">
+    <input type="password" id="confirmPasswordInput" placeholder="Confirm New Password">
+    <button onclick="setPassword(this)">Set Password & Login</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // IMPORTANT: Paste your NEW Web App URL here from Google Apps Script
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDjp28ulT2OSMoujESfCUkkZbC_xw-aPqJQ5Uef8engZeLM7GSE3_sE2-dkHVenejncQ/exec";
+  
+  let appState = { currentUser: null, complaints: [] };
+
+  function showPanel(panelId) {
+    document.querySelectorAll('.container').forEach(panel => panel.classList.add('hidden'));
+    document.getElementById(panelId).classList.remove('hidden');
+  }
+
+  function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'show ' + type;
+      setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+  }
+
+  function apiCall(body, button) {
+      if (button) { button.disabled = true; button.dataset.originalText = button.innerText; button.innerText = 'Processing...'; }
+      return fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(body) })
+      .then(response => response.json())
+      .finally(() => { if (button) { button.disabled = false; button.innerText = button.dataset.originalText; } });
+  }
+
+  async function login(button) {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      if (!email || !password) return showToast("Please enter credentials.", "error");
+
+      const response = await apiCall({ action: 'login', email, password }, button);
+
+      if (response.status === 'success_admin') {
+          showToast(response.message, 'success');
+          renderAllComplaints(response.complaints);
+          showPanel('adminPanel');
+      } else if (response.status === 'success') {
+          appState.currentUser = response.user;
+          sessionStorage.setItem("currentUser", JSON.stringify(response.user));
+          document.getElementById('studentName').innerText = appState.currentUser.firstName;
+          showToast(response.message, 'success');
+          await loadUserComplaints();
+          showPanel('studentPanel');
+      } else {
+          showToast(response.message, 'error');
+      }
+  }
+  
+  window.onload = async () => {
+      const storedUser = sessionStorage.getItem("currentUser");
+      if (storedUser) {
+          appState.currentUser = JSON.parse(storedUser);
+          document.getElementById('studentName').innerText = appState.currentUser.firstName;
+          await loadUserComplaints();
+          showPanel('studentPanel');
+      }
+  };
+
+  function renderAllComplaints(complaints) {
+      const container = document.getElementById("allComplaints");
+      container.innerHTML = "";
+      if (!complaints || complaints.length === 0) {
+          container.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No complaints found.</td></tr>";
+          return;
+      }
+      
+      complaints.sort((a, b) => {
+        if (a.Type < b.Type) return -1;
+        if (a.Type > b.Type) return 1;
+        return new Date(b.Timestamp) - new Date(a.Timestamp);
+      });
+
+      complaints.forEach(c => {
+          const statusClass = c.Status ? c.Status.replace(' ', '-') : 'Pending';
+          const timestamp = c.Timestamp ? new Date(c.Timestamp).toLocaleString() : 'N/A';
+          container.innerHTML += `
+              <tr>
+                <td>${c.Email || 'N/A'}</td>
+                <td>${c.FirstName || ''} ${c.LastName || ''}</td>
+                <td>${c.RoomNumber || 'N/A'}</td>
+                <td>${c.Type || 'N/A'}</td>
+                <td>${c.Complaint || 'N/A'}</td>
+                <td><span class="status-tag tag-${statusClass}">${c.Status}</span></td>
+                <td>${timestamp}</td>
+              </tr>
+          `;
+      });
+  }
+  
+  async function loadUserComplaints() {
+      const response = await apiCall({ action: 'getComplaints', email: appState.currentUser.email });
+      appState.complaints = response;
+      renderStudentComplaints();
+  }
+
+  function renderStudentComplaints() {
+      const container = document.getElementById("studentComplaints");
+      container.innerHTML = "";
+      if (appState.complaints.length === 0) {
+          container.innerHTML = "<p>You haven't submitted any complaints yet.</p>";
+          return;
+      }
+
+      appState.complaints.sort((a, b) => {
+        if (a.Type < b.Type) return -1;
+        if (a.Type > b.Type) return 1;
+        return new Date(b.Timestamp) - new Date(a.Timestamp);
+      });
+
+      appState.complaints.forEach(c => {
+          const statusClass = c.Status ? c.Status.replace(' ', '-') : 'Pending';
+          const cardDiv = document.createElement('div');
+          cardDiv.className = 'complaint-card';
+          let borderColor = 'danger';
+          if (statusClass === 'In-Progress') borderColor = 'warning';
+          if (statusClass === 'Resolved') borderColor = 'success';
+          cardDiv.style.borderLeftColor = `var(--${borderColor}-color)`;
+          cardDiv.innerHTML = `
+                <p><b>Type:</b> ${c.Type}</p>
+                <p><b>Complaint:</b> ${c.Complaint}</p>
+                <p><b>Room:</b> ${c.RoomNumber} | <b>Status:</b> <span class="status-tag tag-${statusClass}">${c.Status}</span></p>
+          `;
+          container.appendChild(cardDiv);
+      });
+  }
+  
+  async function register(button) {
+    const firstName = document.getElementById('regFirstName').value.trim();
+    const lastName = document.getElementById('regLastName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    if (!firstName || !lastName || !email) return showToast("Please fill all fields.", "error");
+    const response = await apiCall({ action: 'register', firstName, lastName, email }, button);
+    if (response.status === 'success') {
+        appState.currentUser = { email };
+        document.getElementById('otpEmailDisplay').innerText = email;
+        showPanel('otpPanel');
+        showToast(response.message, 'success');
+    } else { showToast(response.message, 'error'); }
+  }
+
+  async function verifyOtp(button) {
+      const otp = document.getElementById('otpInput').value.trim();
+      if (!otp) return showToast("Please enter the OTP.", "error");
+      const response = await apiCall({ action: 'verifyOtp', email: appState.currentUser.email, otp }, button);
+      if (response.status === 'success') {
+          showPanel('setPasswordPanel');
+          showToast(response.message, 'success');
+      } else { showToast(response.message, 'error'); }
+  }
+
+  async function setPassword(button) {
+      const password = document.getElementById('setPasswordInput').value;
+      const confirmPassword = document.getElementById('confirmPasswordInput').value;
+      if (password.length < 6) return showToast("Password must be at least 6 characters.", "error");
+      if (password !== confirmPassword) return showToast("Passwords do not match.", "error");
+      const response = await apiCall({ action: 'setPassword', email: appState.currentUser.email, password }, button);
+      if (response.status === 'success') {
+          showPanel('loginPanel');
+          showToast(response.message, 'success');
+      } else { showToast(response.message, 'error'); }
+  }
+  
+  async function forgotPassword(button) {
+      const email = document.getElementById('forgotEmail').value.trim();
+      if (!email) return showToast("Please enter your email address.", "error");
+      const response = await apiCall({ action: 'forgotPassword', email }, button);
+      if (response.status === 'success') {
+          appState.currentUser = { email };
+          document.getElementById('resetOtpEmailDisplay').innerText = email;
+          showPanel('resetOtpPanel');
+          showToast(response.message, 'info');
+      } else { showToast(response.message, 'error'); }
+  }
+
+  async function verifyResetOtp(button) {
+      const otp = document.getElementById('resetOtpInput').value.trim();
+      if (!otp) return showToast("Please enter the reset code.", "error");
+      const response = await apiCall({ action: 'verifyResetOtp', email: appState.currentUser.email, otp }, button);
+      if (response.status === 'success') {
+          showPanel('newPasswordPanel');
+          showToast("Code verified. Please create a new password.", 'success');
+      } else { showToast(response.message, 'error'); }
+  }
+  
+  async function resetPassword(button) {
+      const password = document.getElementById('newPasswordInput').value;
+      const confirmPassword = document.getElementById('confirmNewPasswordInput').value;
+      if (password.length < 6) return showToast("Password must be at least 6 characters.", "error");
+      if (password !== confirmPassword) return showToast("Passwords do not match.", "error");
+      const response = await apiCall({ action: 'resetPassword', email: appState.currentUser.email, password }, button);
+      if (response.status === 'success') {
+          showPanel('loginPanel');
+          showToast("Your password has been reset successfully!", 'success');
+      } else { showToast(response.message, 'error'); }
+  }
+
+  async function submitComplaint(button) {
+    const type = document.getElementById("complaintType").value;
+    const text = document.getElementById("complaintText").value.trim();
+    const roomNumber = document.getElementById("roomNumber").value.trim();
+    if (!type || !text || !roomNumber) return showToast("Please fill out all fields, including room number.", "error");
+    const complaintData = { email: appState.currentUser.email, firstName: appState.currentUser.firstName, lastName: appState.currentUser.lastName, roomNumber: roomNumber, type: type, text: text, status: "Pending" };
+    const response = await apiCall({ action: 'submitComplaint', complaint: complaintData }, button);
+    if (response.status === 'success') {
+        showToast("Complaint submitted successfully!", "success");
+        document.getElementById("complaintType").value = "";
+        document.getElementById("complaintText").value = "";
+        document.getElementById("roomNumber").value = "";
+        await loadUserComplaints();
+    } else { showToast("Error submitting complaint.", "error"); }
+  }
+
+  function logout() {
+    appState.currentUser = null;
+    sessionStorage.removeItem("currentUser");
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    showPanel('loginPanel');
+  }
+
+</script>
+
+</body>
+</html>
